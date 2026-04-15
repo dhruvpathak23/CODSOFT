@@ -1,0 +1,6 @@
+# Ignore datasets and heavy weights
+data/
+saved_models/
+*.h5
+*.keras
+__pycache__/
