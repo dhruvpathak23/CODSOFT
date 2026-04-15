@@ -2,7 +2,6 @@ import tensorflow as tf
 import os
 import string
 import re  
-
 from src.config import BATCH_SIZE, MAX_LENGTH, VOCAB_SIZE, IMAGE_SHAPE, IMAGE_DIR, CAPTION_FILE
 
 def load_captions_data(caption_file, image_dir):
@@ -30,10 +29,8 @@ def custom_standardization(input_string):
 
 def get_vectorizer(captions, vocab_size, max_length):
     vectorizer = tf.keras.layers.TextVectorization(
-        max_tokens=vocab_size,
-        output_mode="int",
-        output_sequence_length=max_length,
-        standardize=custom_standardization
+        max_tokens=vocab_size, output_mode="int",
+        output_sequence_length=max_length, standardize=custom_standardization
     )
     vectorizer.adapt(captions)
     return vectorizer
