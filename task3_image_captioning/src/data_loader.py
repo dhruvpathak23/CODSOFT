@@ -1,6 +1,9 @@
 import tensorflow as tf
 import os
 import string
+import re
+
+
 from src.config import BATCH_SIZE, MAX_LENGTH, VOCAB_SIZE, IMAGE_SHAPE, IMAGE_DIR, CAPTION_FILE, DEBUG_SUBSET_SIZE
 
 def load_captions_data(caption_file, image_dir):
@@ -114,7 +117,7 @@ def get_dataset(batch_size=BATCH_SIZE):
     """
     Main entry point for train.py to pull the dataset.
     """
-    import re # Imported here for the custom_standardization regex
+     # Imported here for the custom_standardization regex
     
     print("Loading raw text data...")
     image_paths, captions = load_captions_data(CAPTION_FILE, IMAGE_DIR)
