@@ -47,12 +47,14 @@ class TransformerDecoderLayer(tf.keras.layers.Layer):
         self.dropout2 = tf.keras.layers.Dropout(dropout_rate)
         self.dropout3 = tf.keras.layers.Dropout(dropout_rate)
 
-    def call(self, x, context, training=False, mask=None):
-        attn1 = self.seq_attention(x, x, use_causal_mask=True)
+    def call(self, x, context, training=False):
+        # x is the text sequence, context is the flattened image features
+        attn1 = self.seq_attention(x, x, use_causal_mask=True, training=training)
         attn1 = self.dropout1(attn1, training=training)
         out1 = self.layernorm1(x + attn1) 
 
-        attn2 = self.cross_attention(out1, context, context)
+        # Cross-attention: Query from text, Key/Value from image context
+        attn2 = self.cross_attention(query=out1, value=context, key=context, training=training)
         attn2 = self.dropout2(attn2, training=training)
         out2 = self.layernorm2(out1 + attn2) 
 
@@ -65,15 +67,32 @@ class TransformerDecoderLayer(tf.keras.layers.Layer):
 class ImageCaptioningModel(tf.keras.Model):
     def __init__(self, vocab_size, max_length, d_model=512, num_heads=8, ff_dim=2048):
         super().__init__()
+        # NEW: Encoder to extract and flatten CNN features
+        self.cnn_model = tf.keras.applications.ResNet50(include_top=False, weights='imagenet')
+        self.cnn_model.trainable = False
+        
+        # Flatten spatial dimensions (7x7 -> 49)
+        self.reshape = tf.keras.layers.Reshape((-1, 2048)) 
         self.cnn_projection = tf.keras.layers.Dense(d_model, activation='relu')
+        
         self.text_embedding = PositionalEmbedding(vocab_size, d_model, max_length)
-        self.decoder_layer1 = TransformerDecoderLayer(d_model, num_heads, ff_dim)
+        self.decoder_layer = TransformerDecoderLayer(d_model, num_heads, ff_dim)
         self.final_layer = tf.keras.layers.Dense(vocab_size)
 
     def call(self, inputs, training=False):
-        img_features, text_seq = inputs
-        context = self.cnn_projection(img_features)
+        img_input, text_seq = inputs
+        
+        # Process Image
+        img_features = self.cnn_model(img_input, training=False)
+        img_features = self.reshape(img_features) # (batch, 49, 2048)
+        context = self.cnn_projection(img_features) # (batch, 49, d_model)
+        
+        # Process Text
         x = self.text_embedding(text_seq)
-        x = self.decoder_layer1(x, context, training=training)
+        
+        # Decode
+        x = self.decoder_layer(x, context, training=training)
+        
+        # Final logits
         logits = self.final_layer(x)
         return logits
