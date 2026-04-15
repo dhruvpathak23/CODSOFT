@@ -8,7 +8,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 # Data paths (Assuming you drop Flickr8k in the data/ folder)
 DATA_DIR = os.path.join(BASE_DIR, "data")
-IMAGE_DIR = os.path.join(DATA_DIR, "Images")          # Folder containing raw .jpg files
+IMAGE_DIR = os.path.join(DATA_DIR, "images")          # Folder containing raw .jpg files
 CAPTION_FILE = os.path.join(DATA_DIR, "captions.txt") # The CSV/TXT mapping images to text
 
 # Save paths
